@@ -1,5 +1,6 @@
 import tensorflow as tf
 import transformers
+import tensorflow_probability as tfp
 from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForSequenceClassification
 
 """
