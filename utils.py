@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForS
 
 from gru_models import GRUModel, VGRUModel
 
-def get_model(learning_rate, use_model="basemodel", tpu_strategy=None):
+def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None):
   """ loads the model and compiles it with the passed hyperparams.
   Which model to use is chosen based on use_model.
   returns a model ready to train.
