@@ -108,7 +108,7 @@ def posterior(kernel_size, bias_size, dtype=None):
   GRU-READ with DenseVariational layer as classifier
 """
 class VGRUModel(tf.keras.Model):
-  def __init__(self, model_name, num_labels, num_forward_passes=1000, num_gru_units=32):
+  def __init__(self, model_name, num_labels, train_data_size, num_forward_passes=1000, num_gru_units=32):
     super().__init__()
 
     self.num_labels = num_labels
