@@ -22,7 +22,7 @@ class GRUModel(tf.keras.Model):
 
     self.classifier = tf.keras.layers.Dense(num_labels, activation='softmax')
 
-  def call(self, input):
+  def call(self, input, training):
     xs = self.encoder(input, return_dict=True).hidden_states
     batchsize = xs[0].shape[0]
     h = None
