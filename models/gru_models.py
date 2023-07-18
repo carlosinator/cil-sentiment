@@ -24,7 +24,7 @@ class GRUModel(tf.keras.Model):
 
   def call(self, input, training):
     xs = self.encoder(input, return_dict=True).hidden_states
-    batchsize = xs[0].shape[0]
+    batchsize = tf.shape(xs[0])[0]
     h = None
     sequence = tf.zeros(shape=(batchsize, xs[0].shape[1], 2 * self.num_gru_units))
     for i in range(len(xs)):
@@ -130,7 +130,7 @@ class VGRUModel(tf.keras.Model):
 
   def call(self, input, training):
     xs = self.encoder(input, return_dict=True).hidden_states
-    batchsize = xs[0].shape[0]
+    batchsize = tf.shape(xs[0])[0]
     h = None
     sequence = tf.zeros(shape=(xs[0].shape[0], 2 * self.num_gru_units))
     for i in range(len(xs)):
