@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForS
 
 from gru_models import GRUModel, VGRUModel
 
-def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None):
+def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None, num_gru_units=8):
   """ loads the model and compiles it with the passed hyperparams.
   Which model to use is chosen based on use_model.
   returns a model ready to train.
@@ -23,14 +23,14 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
     elif use_model == "read":
-      model = GRUModel(model_name, 2, num_gru_units=8)
+      model = GRUModel(model_name, 2, num_gru_units=num_gru_units)
       model.compile(
           loss=tf.keras.losses.SparseCategoricalCrossentropy(),
           optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
     else:
-      model = VGRUModel(model_name, 2, train_data_size=train_data_size, num_gru_units=8)
+      model = VGRUModel(model_name, 2, train_data_size=train_data_size, num_gru_units=num_gru_units)
       model.compile(
           loss=tf.keras.losses.SparseCategoricalCrossentropy(),
           optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
