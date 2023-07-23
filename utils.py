@@ -6,13 +6,17 @@ from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForS
 
 from gru_models import GRUModel, VGRUModel
 
-def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None, num_gru_units=8):
+def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None, num_gru_units=8, train_data_size=None):
   """ loads the model and compiles it with the passed hyperparams.
   Which model to use is chosen based on use_model.
   returns a model ready to train.
   """
-
+  
   assert use_model == "basemodel" or use_model == "read" or use_model == "read-var", "invalid model name, use 'basemodel', 'read' or 'read-var'"
+
+  # if read-var, assert train_data_size is not None
+  if use_model == "read-var":
+    assert train_data_size is not None, "train_data_size must be specified for read-var model"
 
   if tpu_strategy is None:
     if use_model == "basemodel":
