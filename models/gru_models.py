@@ -132,7 +132,7 @@ class VGRUModel(tf.keras.Model):
     xs = self.encoder(input, return_dict=True).hidden_states
     batchsize = tf.shape(xs[0])[0]
     h = None
-    sequence = tf.zeros(shape=(xs[0].shape[0], 2 * self.num_gru_units))
+    sequence = tf.zeros(shape=(tf.shape(xs[0])[0], 2 * self.num_gru_units))
     for i in range(len(xs)):
       sequence, h1, h2 = self.gru(self.norm(tf.keras.layers.Add()([self.linear(xs[i]), sequence])), initial_state=h)
       h = [h1, h2]
