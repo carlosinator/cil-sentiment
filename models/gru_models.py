@@ -53,7 +53,10 @@ class GRUModel(tf.keras.Model):
 
   def call(self, input):
     hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
-    batchsize, sequence_length, dim = tf.shape(hidden_encoder_states[0])
+    shape = tf.shape(hidden_encoder_states[0])
+    batchsize = shape[0]
+    sequence_length = shape[1]
+    dim = shape[2]
 
     correction = tf.zeros(shape=(batchsize, sequence_length, 2 * self.num_gru_units)) # embedding layer is assumed to have correction 0
     for i in range(len(hidden_encoder_states)):
