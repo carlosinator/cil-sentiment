@@ -25,7 +25,7 @@ class GRUModel(tf.keras.Model):
     batchsize, sequence_length, dim = tf.shape(hidden_encoder_states[0])
 
     correction = tf.zeros(shape=(batchsize, sequence_length, 2 * self.num_gru_units)) # embedding layer is assumed to have correction 0
-    for i in range(len(hidden_encoder_states)-1):
+    for i in range(len(hidden_encoder_states)):
       correction = self.gru(self.linear(hidden_encoder_states[i]) + correction)
     
     corrected_last_state = self.linear(hidden_encoder_states[-1]) + correction
