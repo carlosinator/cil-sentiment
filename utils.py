@@ -23,7 +23,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
       model = TFAutoModelForSequenceClassification.from_pretrained(model_name, config=AutoConfig.from_pretrained(model_name))
       model.compile(
           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-          optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=1.),
+          optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
     elif use_model == "read":
@@ -47,7 +47,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
         model = TFAutoModelForSequenceClassification.from_pretrained(model_name, config=AutoConfig.from_pretrained(model_name))
         model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=1.),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
             metrics=[tf.metrics.SparseCategoricalAccuracy()]
         )
     
