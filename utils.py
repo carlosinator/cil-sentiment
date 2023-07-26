@@ -12,7 +12,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
   returns a model ready to train.
   """
   
-  assert use_model == "basemodel" or use_model == "read" or use_model == "read-var", "invalid model name, use 'basemodel', 'read' or 'read-var'"
+  assert use_model == "basemodel" or use_model == "read" or use_model == "read-var" or use_model == "paper-read", "invalid model name, use 'basemodel', 'read', 'read-var' or 'paper-read'"
 
   # if read-var, assert train_data_size is not None
   if use_model == "read-var":
@@ -33,6 +33,8 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
           optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
+    elif use_model == "paper-read":
+      raise ValueError()
     else:
       model = VGRUModel(model_name, 2, train_data_size=train_data_size, num_gru_units=num_gru_units)
       model.compile(
@@ -59,6 +61,9 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
             metrics=[tf.metrics.SparseCategoricalAccuracy()]
         )
+
+    elif use_model == "paper-read":
+      raise ValueError()
     
     else:
       with tpu_strategy.scope():
