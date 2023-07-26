@@ -4,6 +4,37 @@ import tensorflow_probability as tfp
 from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForSequenceClassification
 
 """
+  READ with RNN
+"""
+class READ(tf.keras.Model):
+  def __init__(self, model_name, num_labels, hidden_dimension=None):
+    super().__init__()
+
+    self.num_labels = num_labels
+    config = AutoConfig.from_pretrained(model_name, output_hidden_states=True)
+    self.hidden_dimension = hidden_dimension if hidden_dimension is not None else config.hidden_size
+
+    self.encoder = TFAutoModel.from_pretrained(model_name, config=config)
+    self.encoder.trainable = False
+
+    self.linear1 = tf.keras.layers.Dense(self.hidden_dimension)
+    self.linear2 = tf.keras.layers.Dense(self.hidden_dimension, activation='tanh')
+    self.linear3 = tf.keras.layers.Dense(self.hidden_dimension, activation='tanh')
+    self.classifier = tf.keras.layers.Dense(self.num_labels, activation='softmax')
+
+  def call(self, input):
+    hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
+    batchsize = tf.shape(hidden_encoder_states[0])[0]
+
+    correction = 0 # embedding layer is assumed to have correction 0
+    for i in range(len(hidden_encoder_states)):
+      correction = self.linear2(self.linear1(hidden_encoder_states[i]) + correction)
+
+    corrected_last_state = self.linear3(hidden_encoder_states[-1]) + correction
+
+    return self.classifier(tf.reshape(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state), shape=[batchsize, -1]))
+
+"""
   GRU-READ
 """
 class GRUModel(tf.keras.Model):
