@@ -27,7 +27,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
     elif use_model == "read":
-      model = GRUModel(model_name, 2, num_gru_units=num_gru_units)
+      model = GRUModel(model_name, 2, hidden_dimension=num_gru_units)
       model.compile(
           loss=tf.keras.losses.SparseCategoricalCrossentropy(),
           optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
