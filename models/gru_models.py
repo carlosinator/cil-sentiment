@@ -71,7 +71,7 @@ class READ_GRU(tf.keras.Model):
   def call(self, input):
     hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
     num_hidden_states = len(hidden_encoder_states)
-    sequence_length = input['input_ids'].shape[1] if input['input_ids'].shape[1] is not None else 0
+    sequence_length = input['input_ids'].shape[1]
 
     inputs = tf.stack(hidden_encoder_states) # convert list of tensors to tensor
     # change dimensions (num_hidden_states, batchsize, sequence_length, dim) to (sequence_length, batchsize, num_hidden_states, dim)
