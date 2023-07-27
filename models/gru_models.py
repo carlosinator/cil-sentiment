@@ -4,19 +4,40 @@ import tensorflow_probability as tfp
 from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForSequenceClassification
 
 """
+  MINION
+"""
+class GRUModel(tf.keras.Model):
+  def __init__(self, model_name, num_labels, hidden_dimension=32):
+    super().__init__()
+    self.num_labels = num_labels
+    self.hidden_dimension = hidden_dimension
+    self.encoder = TFAutoModel.from_pretrained(model_name, config=AutoConfig.from_pretrained(model_name, output_hidden_states=True))
+    self.encoder.trainable = False
+    self.linear = tf.keras.layers.Dense(2 * hidden_dimension) # joiner network
+    self.gru = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(hidden_dimension, return_sequences=True, return_state=False))
+    self.classifier = tf.keras.layers.Dense(num_labels, activation='softmax')
+
+  def call(self, input):
+    hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
+
+    correction = 0 # embedding layer is assumed to have correction 0
+    for i in range(len(hidden_encoder_states)):
+      correction = self.gru(self.linear(hidden_encoder_states[i]) + correction)
+
+    corrected_last_state = self.linear(hidden_encoder_states[-1]) + correction
+
+    return self.classifier(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state))
+
+"""
   READ with RNN
 """
 class READ(tf.keras.Model):
-  def __init__(self, model_name, num_labels, hidden_dimension=None):
+  def __init__(self, model_name, num_labels, hidden_dimension=32):
     super().__init__()
-
     self.num_labels = num_labels
-    config = AutoConfig.from_pretrained(model_name, output_hidden_states=True)
-    self.hidden_dimension = hidden_dimension if hidden_dimension is not None else config.hidden_size
-
-    self.encoder = TFAutoModel.from_pretrained(model_name, config=config)
+    self.hidden_dimension = hidden_dimension
+    self.encoder = TFAutoModel.from_pretrained(model_name, config=AutoConfig.from_pretrained(model_name, output_hidden_states=True))
     self.encoder.trainable = False
-
     self.linear1 = tf.keras.layers.Dense(self.hidden_dimension)
     self.linear2 = tf.keras.layers.Dense(self.hidden_dimension, activation='tanh')
     self.linear3 = tf.keras.layers.Dense(self.hidden_dimension, activation='tanh')
@@ -24,7 +45,6 @@ class READ(tf.keras.Model):
 
   def call(self, input):
     hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
-    batchsize = tf.shape(hidden_encoder_states[0])[0]
 
     correction = 0 # embedding layer is assumed to have correction 0
     for i in range(len(hidden_encoder_states)):
@@ -32,39 +52,39 @@ class READ(tf.keras.Model):
 
     corrected_last_state = self.linear3(hidden_encoder_states[-1]) + correction
 
-    return self.classifier(tf.reshape(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state), shape=[batchsize, -1]))
+    return self.classifier(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state))
 
 """
-  GRU-READ
+  READ with GRU
 """
-class GRUModel(tf.keras.Model):
-  def __init__(self, model_name, num_labels, num_gru_units=32):
+class READ_GRU(tf.keras.Model):
+  def __init__(self, model_name, num_labels, hidden_dimension=32):
     super().__init__()
-
     self.num_labels = num_labels
-    self.num_gru_units = num_gru_units
-
+    self.hidden_dimension = hidden_dimension
     self.encoder = TFAutoModel.from_pretrained(model_name, config=AutoConfig.from_pretrained(model_name, output_hidden_states=True))
     self.encoder.trainable = False
-
-    self.linear = tf.keras.layers.Dense(2 * num_gru_units) # joiner network
-    self.gru = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(num_gru_units, return_sequences=True, return_state=False))
-    self.classifier = tf.keras.layers.Dense(num_labels, activation='softmax')
+    self.linear = tf.keras.layers.Dense(self.hidden_dimension, activation='tanh')
+    self.gru = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(self.hidden_dimension, return_sequences=False, return_state=True))
+    self.classifier = tf.keras.layers.Dense(self.num_labels, activation='softmax')
 
   def call(self, input):
     hidden_encoder_states = self.encoder(input, return_dict=True).hidden_states
-    shape = tf.shape(hidden_encoder_states[0])
-    batchsize = shape[0]
-    sequence_length = shape[1]
-    dim = shape[2]
+    num_hidden_states = len(hidden_encoder_states)
+    sequence_length = input['input_ids'].shape[1] if input['input_ids'].shape[1] is not None else 0
 
-    correction = tf.zeros(shape=(batchsize, sequence_length, 2 * self.num_gru_units)) # embedding layer is assumed to have correction 0
-    for i in range(len(hidden_encoder_states)):
-      correction = self.gru(self.linear(hidden_encoder_states[i]) + correction)
-    
-    corrected_last_state = self.linear(hidden_encoder_states[-1]) + correction
+    inputs = tf.stack(hidden_encoder_states) # convert list of tensors to tensor
+    # change dimensions (num_hidden_states, batchsize, sequence_length, dim) to (sequence_length, batchsize, num_hidden_states, dim)
+    inputs = tf.transpose(inputs, perm=[2, 1, 0, 3])
 
-    return self.classifier(tf.reshape(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state), shape=[batchsize, -1]))
+    outputs = []
+    for i in range(sequence_length):
+      outputs.append(tf.keras.layers.Add()(self.gru(inputs[i])[1:]))
+    last_correction = tf.transpose(tf.stack(outputs), perm=[1, 0, 2])
+
+    corrected_last_state = self.linear(hidden_encoder_states[-1]) + last_correction
+    return self.classifier(tf.keras.layers.GlobalAveragePooling1D()(corrected_last_state))
+
 
 """
   GRU-READ with MC-Dropout
