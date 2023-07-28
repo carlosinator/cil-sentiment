@@ -121,7 +121,7 @@ class Experiment:
             pickle.dump(self.gpu_hist, f)
         with open(history_name, 'wb') as f:
             pickle.dump(self.history, f)
-        subprocess.run("gsutil cp -r {self.experiment_name + \"/\"} \"gs://cil_2023/models/\"") # TODO: NOT WORKING
+        subprocess.run("gsutil cp -r {self.experiment_name + \"/\"} \"gs://cil_2023/models/\"")
         subprocess.run("gsutil cp {history_name} \"gs://cil_2023/models/\"")
         subprocess.run("gsutil cp {gpu_hist_name} \"gs://cil_2023/models/\"")
 
