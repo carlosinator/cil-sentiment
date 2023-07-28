@@ -12,7 +12,7 @@ import sched, time
 import pickle
 import re
 from pathlib import Path
-from model_classes import MINION, READ, READ_GRU
+from models import MINION, READ, READ_GRU
 
 """
     Helper functions
@@ -121,20 +121,20 @@ class Experiment:
             pickle.dump(self.gpu_hist, f)
         with open(history_name, 'wb') as f:
             pickle.dump(self.history, f)
-        os.system("gsutil cp -r {self.experiment_name + \"/\"} \"gs://cil_2023/models/\"")
-        os.system("gsutil cp {history_name} \"gs://cil_2023/models/\"")
-        os.system("gsutil cp {gpu_hist_name} \"gs://cil_2023/models/\"")
+        subprocess.run("gsutil cp -r {self.experiment_name + \"/\"} \"gs://cil_2023/models/\"") # TODO: NOT WORKING
+        subprocess.run("gsutil cp {history_name} \"gs://cil_2023/models/\"")
+        subprocess.run("gsutil cp {gpu_hist_name} \"gs://cil_2023/models/\"")
 
     def load_model(self):
         if not Path(self.experiment_name).exists():
-            os.system("gsutil cp -r {\"gs://cil_2023/models/\" + self.experiment_name} .")
+            subprocess.run("gsutil cp -r {\"gs://cil_2023/models/\" + self.experiment_name} .")
         self.model = tf.keras.models.load_model(self.experiment_name)
 
     def load_gpu_history(self):
         gpu_file_name = get_gpu_hist_name(self.experiment_name)
         
         if not Path(gpu_file_name).exists():
-            os.system("gsutil cp {\"gs://cil_2023/models/\" + gpu_file_name} .")
+            subprocess.run("gsutil cp {\"gs://cil_2023/models/\" + gpu_file_name} .")
         
         with open(gpu_file_name, 'rb') as file:
             unpickled_object = pickle.load(file)
