@@ -178,6 +178,10 @@ class Experiment:
         scoring["cal_curve_y"] = prob_true
 
         return scoring
+    
+    def evaluate(self, test_ds, nbins=20):
+        predictions, probs, labels = self.predict(test_ds)
+        return self.get_scoring(predictions, probs, labels, nbins)
 
     def get_duration(self):
         if self.gpu_hist is None:
