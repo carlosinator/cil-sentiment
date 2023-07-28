@@ -61,6 +61,7 @@ class Experiment:
                  base_model_name="vinai/bertweet-base") -> None:
     
         self.model_type = model_type
+        self.hidden_dimension = hidden_dimension
         self.batchsize = batchsize
         self.learning_rate = learning_rate
         self.epochs = epochs
