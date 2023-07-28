@@ -89,7 +89,7 @@ class Experiment:
         if self.tpu_strategy is None:
             self.model = initialize(self.model_type)
             self.model.compile(
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=(self.model_type == 'base')),
                 optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate, amsgrad=False, clipnorm=None),
                 metrics=[tf.metrics.SparseCategoricalAccuracy()]
             )
@@ -97,7 +97,7 @@ class Experiment:
             with self.tpu_strategy.scope():
                 self.model = initialize(self.model_type)
                 self.model.compile(
-                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=(self.model_type == 'base')),
                     optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate, amsgrad=False, clipnorm=None),
                     metrics=[tf.metrics.SparseCategoricalAccuracy()]
                 )
