@@ -4,6 +4,7 @@ import transformers
 import tensorflow_probability as tfp
 from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForSequenceClassification
 import sklearn
+from sklearn.calibration import calibration_curve
 import subprocess
 import os
 from threading import Thread , Timer
@@ -163,13 +164,13 @@ class Experiment:
         scoring["f1"] = sklearn.metrics.f1_score(labels, predictions, average='macro')
         
         # compute adaptive calibration error (ace)
-        prob_true_quantile, prob_pred_quantile = sklearn.calibration.calibration_curve(y_true=labels, y_prob=probs[:, 1],
-                                                                                       n_bins=nbins, strategy='quantile')
+        prob_true_quantile, prob_pred_quantile = calibration_curve(y_true=labels, y_prob=probs[:, 1],
+                                                                   n_bins=nbins, strategy='quantile')
         scoring["ace"] = np.mean(np.abs(prob_true_quantile - prob_pred_quantile))
 
         # compute maximum calibration error (mce)
-        prob_true, prob_pred = sklearn.calibration.calibration_curve(y_true=labels, y_prob=probs[:, 1],
-                                                                     n_bins=nbins, strategy='uniform')
+        prob_true, prob_pred = calibration_curve(y_true=labels, y_prob=probs[:, 1],
+                                                 n_bins=nbins, strategy='uniform')
         scoring["mce"] = np.max(np.abs(prob_true - prob_pred))
 
         # calibration curve
