@@ -121,20 +121,20 @@ class Experiment:
             pickle.dump(self.gpu_hist, f)
         with open(history_name, 'wb') as f:
             pickle.dump(self.history, f)
-        subprocess.run("gsutil cp -r {self.experiment_name + \"/\"} \"gs://cil_2023/models/\"", shell=True)
-        subprocess.run("gsutil cp {history_name} \"gs://cil_2023/models/\"", shell=True)
-        subprocess.run("gsutil cp {gpu_hist_name} \"gs://cil_2023/models/\"", shell=True)
+        subprocess.run(f"gsutil cp -r {self.experiment_name + '/'} 'gs://cil_2023/models/'", shell=True)
+        subprocess.run(f"gsutil cp {history_name} 'gs://cil_2023/models/'", shell=True)
+        subprocess.run(f"gsutil cp {gpu_hist_name} 'gs://cil_2023/models/'", shell=True)
 
     def load_model(self):
         if not Path(self.experiment_name).exists():
-            subprocess.run("gsutil cp -r {\"gs://cil_2023/models/\" + self.experiment_name} .", shell=True)
+            subprocess.run(f"gsutil cp -r {'gs://cil_2023/models/' + self.experiment_name} .", shell=True)
         self.model = tf.keras.models.load_model(self.experiment_name)
 
     def load_gpu_history(self):
         gpu_file_name = get_gpu_hist_name(self.experiment_name)
         
         if not Path(gpu_file_name).exists():
-            subprocess.run("gsutil cp {\"gs://cil_2023/models/\" + gpu_file_name} .", shell=True)
+            subprocess.run(f"gsutil cp {'gs://cil_2023/models/' + gpu_file_name} .", shell=True)
         
         with open(gpu_file_name, 'rb') as file:
             unpickled_object = pickle.load(file)
