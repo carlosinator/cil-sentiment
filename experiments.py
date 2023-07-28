@@ -37,7 +37,7 @@ def track_gpu_mem(experiment_obj, interval=5.0):
 
     out = subprocess.check_output("nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv", shell=True).decode()
     float_pattern = r'\d+\.\d+|\d+'
-    numbers = re.findall(float_pattern, out[1])
+    numbers = re.findall(float_pattern, out)
 
     experiment_obj.gpu_hist["counter"] += 1
     experiment_obj.gpu_hist["mib"].append(float(numbers[0]))
