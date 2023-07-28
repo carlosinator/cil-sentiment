@@ -11,7 +11,7 @@ import sched, time
 import pickle
 import re
 from pathlib import Path
-from models import *
+from models import MINION, READ, READ_GRU
 
 """
     Helper functions
