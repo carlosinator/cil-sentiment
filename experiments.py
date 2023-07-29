@@ -150,7 +150,7 @@ class Experiment:
         probs = self.model.predict(test_ds)
 
         if self.model_type == 'base':
-            probs = tf.nn.softmax(probs.logits).numpy() # base model outputs logits
+            probs = tf.nn.softmax(probs["logits"]).numpy() # base model outputs logits
             
         predictions = np.argmax(probs, axis=1)
         labels = np.concatenate([y for x, y in test_ds], axis=0)
