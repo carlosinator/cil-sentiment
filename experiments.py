@@ -120,6 +120,7 @@ class Experiment:
         self.gpu_hist = { "memory" : [], "util" : [], "counter" : 0 }
 
         initial_memory = current_gpu_stats()["memory"]
+        print(initial_memory)
 
         gpu_mem_proc = track_gpu_mem(self, 10.0) # start gpu tracking
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
