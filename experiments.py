@@ -125,7 +125,7 @@ class Experiment:
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         gpu_mem_proc.join() # stop gpu tracking
         
-        self.gpu_hist["memory"] = self.gpu_hist["memory"] - initial_memory # subtract initial memory
+        self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory) # subtract initial memory
 
         # store model and histories
         history_name = get_training_hist_name(self.experiment_name)
