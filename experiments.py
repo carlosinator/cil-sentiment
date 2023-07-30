@@ -125,8 +125,12 @@ class Experiment:
         gpu_mem_proc = track_gpu_mem(self, 10.0) # start gpu tracking
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         gpu_mem_proc.join() # stop gpu tracking
-        
+
+        print(np.mean(np.array(self.gpu_hist["memory"])))
+        print(self.gpu_hist["memory"][0])
         self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory) # subtract initial memory
+        print(np.mean(np.array(self.gpu_hist["memory"])))
+        print(self.gpu_hist["memory"][0])
 
         # store model and histories
         history_name = get_training_hist_name(self.experiment_name)
