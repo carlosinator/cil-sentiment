@@ -185,7 +185,7 @@ class Experiment:
         predictions, probs, labels = self.predict(test_ds)
         return self.get_scoring(predictions, probs, labels, nbins)
 
-    def get_duration(self):
+    def get_training_duration(self):
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         percent_values = self.gpu_hist["percent"]
@@ -204,14 +204,13 @@ class Experiment:
 
         return total_time_seconds, hours, minutes, average_time_per_epoch_seconds
 
-    def compute_energy_consumption(self, p0 = 0.4):
+    def compute_energy_consumption_kWH(self, p0 = 0.4):
         # p0 = 0.4 is the value for gpu A100; see here for SXM: https://www.nvidia.com/en-us/data-center/a100/
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         utilization_percents = self.gpu_hist["percent"]
         interval = self.gpu_hist["interval"]
 
-        # Calculate the number of entries per minute
         entries_per_minute = (int)(60 // interval)
 
         # Check if the utilization_percents length is a multiple of entries_per_minute
@@ -222,14 +221,16 @@ class Experiment:
 
         # Reshape the utilization_percents to a 2D array with 'entries_per_minute' columns
         utilization_percents = np.array(utilization_percents).reshape(-1, entries_per_minute)
+        utilization_percents_per_minutes = utilization_percents.mean(axis=1) # average of each row
 
-        # Create utilization_percents_per_minutes list by taking the average of each row
-        utilization_percents_per_minutes = utilization_percents.mean(axis=1)
+        total_energy_consumption = np.sum(utilization_percents_per_minutes) * p0 / 6000 # in kWH
 
-
-        # Compute the total energy consumption
-        total_energy_consumption = np.sum(utilization_percents_per_minutes) * p0 / 6000
-
-        # result is in kWH
         return total_energy_consumption
+
+    def compute_average_gpu_memory_MiB(self):
+        if self.gpu_hist is None:
+            self.gpu_hist = self.load_gpu_history()
+        
+        return np.mean(self.gpu_hist["mib"])
+
 
