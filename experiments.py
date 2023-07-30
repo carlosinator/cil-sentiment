@@ -73,6 +73,7 @@ class Experiment:
 
         self.experiment_name = get_experiment_name(model_type, hidden_dimension, learning_rate, epochs, batchsize)
         self.gpu_hist = None
+        self.model = None
     
     def compile(self):
         def initialize(model_type):
