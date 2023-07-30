@@ -143,6 +143,7 @@ class Experiment:
 
         # remove trailing zeros (due to some bugs, this may occur, if gpu measurement does not automatically stop)
         unpickled_object["percent"] = np.trim_zeros(np.array(unpickled_object["percent"]), trim='b').tolist()
+        unpickled_object["mib"] = unpickled_object["mib"][:len(unpickled_object["percent"])]
 
         return unpickled_object
     
