@@ -4,7 +4,8 @@ import keras_nlp
 import transformers
 from transformers import AutoTokenizer, TFAutoModel, AutoConfig, TFAutoModelForSequenceClassification
 
-from gru_models import GRUModel, VGRUModel, READ_GRU
+# from gru_models import GRUModel, VGRUModel, READ_GRU
+from model_classes import MINION, READ, READ_GRU
 
 def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=None, num_gru_units=8, train_data_size=None):
   """ loads the model and compiles it with the passed hyperparams.
@@ -27,7 +28,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )
     elif use_model == "read":
-      model = GRUModel(model_name, 2, hidden_dimension=num_gru_units)
+      model = MINION(model_name, 2, hidden_dimension=num_gru_units)
       model.compile(
           loss=tf.keras.losses.SparseCategoricalCrossentropy(),
           optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
@@ -41,12 +42,8 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
           metrics=[tf.metrics.SparseCategoricalAccuracy()]
       )  
     else:
-      model = VGRUModel(model_name, 2, train_data_size=train_data_size, num_gru_units=num_gru_units)
-      model.compile(
-          loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-          optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
-          metrics=[tf.metrics.SparseCategoricalAccuracy()]
-      )  
+      # raise deprecated error
+      raise ValueError("VGRUModel is deprecated, use 'read' instead")
       
   else: # tpu included
     if use_model == "basemodel":
@@ -60,7 +57,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
     
     elif use_model == "read":
       with tpu_strategy.scope():
-        model = GRUModel(model_name, 2, num_gru_units=8)
+        model = MINION(model_name, 2, num_gru_units=8)
         model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy(),
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
@@ -77,12 +74,7 @@ def get_model(model_name, learning_rate, use_model="basemodel", tpu_strategy=Non
         )  
     
     else:
-      with tpu_strategy.scope():
-        model = VGRUModel(model_name, 2, train_data_size=train_data_size, num_gru_units=8)
-        model.compile(
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate, amsgrad=False, clipnorm=None),
-            metrics=[tf.metrics.SparseCategoricalAccuracy()]
-        )
+      # raise deprecated error
+      raise ValueError("VGRUModel is deprecated, use 'read' instead")
 
   return model
