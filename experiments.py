@@ -31,6 +31,15 @@ def get_training_hist_name(experiment_name):
     return "training_hist_" + experiment_name + ".pkl"
 
 
+def current_gpu_stats():
+    """
+        Returns the current memory usage (MiB) and utilization (%) of the gpu
+    """
+    out = subprocess.check_output("nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv", shell=True).decode()
+    float_pattern = r'\d+\.\d+|\d+'
+    numbers = re.findall(float_pattern, out)
+    return {"memory" : float(numbers[0]), "util" : float(numbers[1])}
+
 def track_gpu_mem(experiment_obj, interval=5.0):
     """
         This function calls itself every 5 secs and print the gpu_memory.
@@ -38,13 +47,11 @@ def track_gpu_mem(experiment_obj, interval=5.0):
     thread_gpu_tracker = Timer(interval, track_gpu_mem, [experiment_obj, interval])
     thread_gpu_tracker.start()
 
-    out = subprocess.check_output("nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv", shell=True).decode()
-    float_pattern = r'\d+\.\d+|\d+'
-    numbers = re.findall(float_pattern, out)
+    stats = current_gpu_stats()
 
     experiment_obj.gpu_hist["counter"] += 1
-    experiment_obj.gpu_hist["mib"].append(float(numbers[0]))
-    experiment_obj.gpu_hist["percent"].append(float(numbers[1]))
+    experiment_obj.gpu_hist["memory"].append(stats["memory"])
+    experiment_obj.gpu_hist["util"].append(stats["util"])
     experiment_obj.gpu_hist["interval"] = interval
 
     return thread_gpu_tracker
@@ -110,11 +117,15 @@ class Experiment:
             Trains self.model while tracking the memory and energy usage of the gpu.
             The model and all histories are saved.
         """
-        self.gpu_hist = { "mib" : [], "percent" : [], "counter" : 0 }
+        self.gpu_hist = { "memory" : [], "util" : [], "counter" : 0 }
+
+        initial_memory = current_gpu_stats()["memory"]
 
         gpu_mem_proc = track_gpu_mem(self, 10.0) # start gpu tracking
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         gpu_mem_proc.join() # stop gpu tracking
+        
+        self.gpu_hist["memory"] = self.gpu_hist["memory"] - initial_memory # subtract initial memory
 
         # store model and histories
         history_name = get_training_hist_name(self.experiment_name)
@@ -143,8 +154,8 @@ class Experiment:
             unpickled_object = pickle.load(file)
 
         # remove trailing zeros (due to some bugs, this may occur, if gpu measurement does not automatically stop)
-        unpickled_object["percent"] = np.trim_zeros(np.array(unpickled_object["percent"]), trim='b').tolist()
-        unpickled_object["mib"] = unpickled_object["mib"][:len(unpickled_object["percent"])]
+        unpickled_object["util"] = np.trim_zeros(np.array(unpickled_object["util"]), trim='b').tolist()
+        unpickled_object["memory"] = unpickled_object["memory"][:len(unpickled_object["util"])]
 
         return unpickled_object
     
@@ -190,7 +201,7 @@ class Experiment:
     def get_training_duration(self):
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
-        percent_values = self.gpu_hist["percent"]
+        percent_values = self.gpu_hist["util"]
         interval = self.gpu_hist["interval"]
         total_time_seconds = len(percent_values) * interval
 
@@ -210,7 +221,7 @@ class Experiment:
         # p0 = 0.4 is the value for gpu A100; see here for SXM: https://www.nvidia.com/en-us/data-center/a100/
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
-        utilization_percents = self.gpu_hist["percent"]
+        utilization_percents = self.gpu_hist["util"]
         interval = self.gpu_hist["interval"]
 
         entries_per_minute = (int)(60 // interval)
@@ -233,6 +244,6 @@ class Experiment:
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         
-        return np.mean(self.gpu_hist["mib"])
+        return np.mean(self.gpu_hist["memory"])
 
 
