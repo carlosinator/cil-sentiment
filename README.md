@@ -1,11 +1,14 @@
-# CIL Sentiment Analysis "Minions: Accurate and Effective"
+# CIL Sentiment Analysis "MINION vs BERT: Efficient Fine-Tuning"
 
 All of our experiments were run using Google Colab. To reproduce the results, using Colab is recommended. Furthermore, all the data and models are stored using the Google Cloud Storage system.
 
-Short summary for reproducability: To reproduce the results, run the following notebooks in the given order.
+Short summary for reproducibility: To reproduce the results, run the following notebooks in the given order.
 1) Preprocessing.ipynb
 2) FastTextModel.ipynb
 3) main.ipynb
+
+## Final Report
+The report including the plagiarism form is located in "final_report.pdf"
 
 ## Preprocessing
 
