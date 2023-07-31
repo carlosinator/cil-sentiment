@@ -44,6 +44,9 @@ def track_gpu_mem(experiment_obj, interval=5.0):
     """
         This function calls itself every 5 secs and print the gpu_memory.
     """
+    if experiment_obj.stop_tracking:
+        return
+    
     thread_gpu_tracker = Timer(interval, track_gpu_mem, [experiment_obj, interval])
     thread_gpu_tracker.start()
 
@@ -53,8 +56,6 @@ def track_gpu_mem(experiment_obj, interval=5.0):
     experiment_obj.gpu_hist["memory"].append(stats["memory"])
     experiment_obj.gpu_hist["util"].append(stats["util"])
     experiment_obj.gpu_hist["interval"] = interval
-
-    return thread_gpu_tracker
 
 
 """
@@ -120,11 +121,11 @@ class Experiment:
         self.gpu_hist = { "memory" : [], "util" : [], "counter" : 0 }
 
         initial_memory = current_gpu_stats()["memory"]
-        print(initial_memory)
 
-        gpu_mem_proc = track_gpu_mem(self, 10.0) # start gpu tracking
+        self.stop_tracking = False
+        track_gpu_mem(self, 10.0) # start gpu tracking
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
-        gpu_mem_proc.join() # stop gpu tracking
+        self.stop_tracking = True
 
         # remove trailing zeros
         self.gpu_hist["util"] = np.trim_zeros(np.array(self.gpu_hist["util"]), trim='b').tolist()
