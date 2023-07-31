@@ -31,18 +31,9 @@ def get_training_hist_name(experiment_name):
     return "training_hist_" + experiment_name + ".pkl"
 
 
-def current_gpu_stats():
-    """
-        Returns the current memory usage (MiB) and utilization (%) of the gpu
-    """
-    out = subprocess.check_output("nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv", shell=True).decode()
-    float_pattern = r'\d+\.\d+|\d+'
-    numbers = re.findall(float_pattern, out)
-    return {"memory" : float(numbers[0]), "util" : float(numbers[1])}
-
 def track_gpu_mem(experiment_obj, interval=5.0):
     """
-        This function calls itself every 5 secs and print the gpu_memory.
+        This function calls itself every 5 secs and appends current gpu memory and utilization in experiment_obj.gpu_hist.
     """
     if experiment_obj.stop_tracking:
         return
@@ -50,11 +41,13 @@ def track_gpu_mem(experiment_obj, interval=5.0):
     thread_gpu_tracker = Timer(interval, track_gpu_mem, [experiment_obj, interval])
     thread_gpu_tracker.start()
 
-    stats = current_gpu_stats()
-
+    out = subprocess.check_output("nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv", shell=True).decode()
+    float_pattern = r'\d+\.\d+|\d+'
+    numbers = re.findall(float_pattern, out)
+    
     experiment_obj.gpu_hist["counter"] += 1
-    experiment_obj.gpu_hist["memory"].append(stats["memory"])
-    experiment_obj.gpu_hist["util"].append(stats["util"])
+    experiment_obj.gpu_hist["memory"].append(float(numbers[0]))
+    experiment_obj.gpu_hist["util"].append(float(numbers[1]))
     experiment_obj.gpu_hist["interval"] = interval
 
 
@@ -84,6 +77,9 @@ class Experiment:
         self.model = None
     
     def compile(self):
+        """
+            Initializes and compiles a model as defined by the parameters of the experiment
+        """
         def initialize(model_type):
             if model_type == 'base':
                 return TFAutoModelForSequenceClassification.from_pretrained(self.base_model_name,
@@ -120,15 +116,10 @@ class Experiment:
         """
         self.gpu_hist = { "memory" : [], "util" : [], "counter" : 0 }
 
-        initial_memory = current_gpu_stats()["memory"]
-
         self.stop_tracking = False
         track_gpu_mem(self, 10.0) # start gpu tracking
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         self.stop_tracking = True
-
-        # subtract initial memory
-        self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory)
 
         # store model and histories
         history_name = get_training_hist_name(self.experiment_name)
@@ -143,11 +134,17 @@ class Experiment:
         subprocess.run(f"gsutil cp {gpu_hist_name} {MODEL_SAVE_PATH}", shell=True)
 
     def load_model(self):
+        """
+            Loads the model defined by the experiment from local machine or GCS.
+        """
         if not Path(self.experiment_name).exists():
             subprocess.run(f"gsutil cp -r {MODEL_SAVE_PATH + self.experiment_name} .", shell=True)
         self.model = tf.keras.models.load_model(self.experiment_name)
 
     def load_gpu_history(self):
+        """
+            Loads the gpu history of the last self.train() run from local machine or GCS.
+        """
         gpu_file_name = get_gpu_hist_name(self.experiment_name)
         
         if not Path(gpu_file_name).exists():
@@ -159,6 +156,9 @@ class Experiment:
         return unpickled_object
     
     def predict(self, test_ds):
+        """
+            Makes predictions for test data set test_ds and returns predictions, their respective probability vectors and the true labels
+        """
         probs = self.model.predict(test_ds)
 
         if self.model_type == 'base':
@@ -194,10 +194,16 @@ class Experiment:
         return scoring
     
     def evaluate(self, test_ds, nbins=20):
+        """
+            Evaluates self.model on data set test_ds and returns a dict of all scoring metrics
+        """
         predictions, probs, labels = self.predict(test_ds)
         return self.get_scoring(predictions, probs, labels, nbins)
 
     def get_training_duration(self):
+        """
+            Returns the (time (s), # hours, # minutes, avg. time per epoch (s)) from the last self.train() run
+        """
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         percent_values = self.gpu_hist["util"]
@@ -217,6 +223,9 @@ class Experiment:
         return total_time_seconds, hours, minutes, average_time_per_epoch_seconds
 
     def compute_energy_consumption_kWH(self, p0 = 0.4):
+        """
+            Returns the approximate energy consumption of the last self.train run (in kWH)
+        """
         # p0 = 0.4 is the value for gpu A100; see here for SXM: https://www.nvidia.com/en-us/data-center/a100/
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
@@ -240,6 +249,9 @@ class Experiment:
         return total_energy_consumption
 
     def compute_average_gpu_memory_MiB(self):
+        """
+            Returns the average memory usage in (MiB) during the last self.train run
+        """
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         
