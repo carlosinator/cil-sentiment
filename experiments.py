@@ -126,9 +126,11 @@ class Experiment:
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         gpu_mem_proc.join() # stop gpu tracking
 
-        print(self.gpu_hist["memory"])
-        self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory) # subtract initial memory
-        print(self.gpu_hist["memory"])
+        # remove trailing zeros
+        self.gpu_hist["util"] = np.trim_zeros(np.array(unpickled_object["util"]), trim='b').tolist()
+        self.gpu_hist["memory"] = unpickled_object["memory"][:len(unpickled_object["util"])]
+        # subtract initial memory
+        self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory)
 
         # store model and histories
         history_name = get_training_hist_name(self.experiment_name)
@@ -155,10 +157,6 @@ class Experiment:
         
         with open(gpu_file_name, 'rb') as file:
             unpickled_object = pickle.load(file)
-
-        # remove trailing zeros (due to some bugs, this may occur, if gpu measurement does not automatically stop)
-        unpickled_object["util"] = np.trim_zeros(np.array(unpickled_object["util"]), trim='b').tolist()
-        unpickled_object["memory"] = unpickled_object["memory"][:len(unpickled_object["util"])]
 
         return unpickled_object
     
