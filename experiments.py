@@ -127,8 +127,8 @@ class Experiment:
         gpu_mem_proc.join() # stop gpu tracking
 
         # remove trailing zeros
-        self.gpu_hist["util"] = np.trim_zeros(np.array(unpickled_object["util"]), trim='b').tolist()
-        self.gpu_hist["memory"] = unpickled_object["memory"][:len(unpickled_object["util"])]
+        self.gpu_hist["util"] = np.trim_zeros(np.array(self.gpu_hist["util"]), trim='b').tolist()
+        self.gpu_hist["memory"] = self.gpu_hist["memory"][:len(self.gpu_hist["util"])]
         # subtract initial memory
         self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory)
 
