@@ -1,6 +1,6 @@
 # CIL Sentiment Analysis "MINION vs BERT: Efficient Fine-Tuning"
 
-All of our experiments were run using Google Colab. To reproduce the results, using Colab is recommended. Furthermore, all the data and models are stored using the Google Cloud Storage system.
+All of our experiments were run using Google Colab. To reproduce the results, using Colab is recommended. Furthermore, all the data and models are stored using the Google Cloud Storage (GCS) system. In GCS we set up a bucket called "cil_2023" containing a floder "final_models".
 
 Short summary for reproducibility: To reproduce the results, run the following notebooks in the given order.
 1) Preprocessing.ipynb
