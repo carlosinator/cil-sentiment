@@ -127,9 +127,6 @@ class Experiment:
         self.history = self.model.fit(train_ds, validation_data=val_ds, epochs=self.epochs, verbose=1)
         self.stop_tracking = True
 
-        # remove trailing zeros
-        self.gpu_hist["util"] = np.trim_zeros(np.array(self.gpu_hist["util"]), trim='b').tolist()
-        self.gpu_hist["memory"] = self.gpu_hist["memory"][:len(self.gpu_hist["util"])]
         # subtract initial memory
         self.gpu_hist["memory"] = list(np.array(self.gpu_hist["memory"]) - initial_memory)
 
