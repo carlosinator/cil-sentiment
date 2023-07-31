@@ -32,4 +32,4 @@ Defining the setting, training, loading previously saved models and evaluation h
 
 ## Prediction for Kaggle submission
 
-The notebook infer_submission.ipynb was used to compute the predictions submitted to Kaggle.
+In the last chapter of the notebook main.ipynb we compute the Kaggle submission.
