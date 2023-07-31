@@ -46,8 +46,8 @@ def track_gpu_mem(experiment_obj, interval=5.0):
     numbers = re.findall(float_pattern, out)
     
     experiment_obj.gpu_hist["counter"] += 1
-    experiment_obj.gpu_hist["memory"].append(float(numbers[0]))
-    experiment_obj.gpu_hist["util"].append(float(numbers[1]))
+    experiment_obj.gpu_hist["mib"].append(float(numbers[0]))
+    experiment_obj.gpu_hist["percent"].append(float(numbers[1]))
     experiment_obj.gpu_hist["interval"] = interval
 
 
@@ -114,7 +114,7 @@ class Experiment:
             Trains self.model while tracking the memory and energy usage of the gpu.
             The model and all histories are saved.
         """
-        self.gpu_hist = { "memory" : [], "util" : [], "counter" : 0 }
+        self.gpu_hist = { "mib" : [], "percent" : [], "counter" : 0 }
 
         self.stop_tracking = False
         track_gpu_mem(self, 10.0) # start gpu tracking
@@ -206,7 +206,7 @@ class Experiment:
         """
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
-        percent_values = self.gpu_hist["util"]
+        percent_values = self.gpu_hist["percent"]
         interval = self.gpu_hist["interval"]
         total_time_seconds = len(percent_values) * interval
 
@@ -229,7 +229,7 @@ class Experiment:
         # p0 = 0.4 is the value for gpu A100; see here for SXM: https://www.nvidia.com/en-us/data-center/a100/
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
-        utilization_percents = self.gpu_hist["util"]
+        utilization_percents = self.gpu_hist["percent"]
         interval = self.gpu_hist["interval"]
 
         entries_per_minute = (int)(60 // interval)
@@ -255,6 +255,6 @@ class Experiment:
         if self.gpu_hist is None:
             self.gpu_hist = self.load_gpu_history()
         
-        return np.mean(self.gpu_hist["memory"])
+        return np.mean(self.gpu_hist["mib"])
 
 
