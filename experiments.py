@@ -157,7 +157,7 @@ class Experiment:
     
     def predict(self, test_ds):
         """
-            Makes predictions for test data set test_ds and returns predictions, their respective probability vectors and the true labels
+            Makes predictions for test data set test_ds and returns predictions and their respective probability vectors
         """
         probs = self.model.predict(test_ds)
 
@@ -165,9 +165,8 @@ class Experiment:
             probs = tf.nn.softmax(probs["logits"]).numpy() # base model outputs logits
             
         predictions = np.argmax(probs, axis=1)
-        labels = np.concatenate([y for x, y in test_ds], axis=0)
         
-        return predictions, probs, labels
+        return predictions, probs
 
     def get_scoring(self, predictions, probs, labels, nbins=20):
         """
@@ -197,7 +196,8 @@ class Experiment:
         """
             Evaluates self.model on data set test_ds and returns a dict of all scoring metrics
         """
-        predictions, probs, labels = self.predict(test_ds)
+        labels = np.concatenate([y for x, y in test_ds], axis=0)
+        predictions, probs = self.predict(test_ds)
         return self.get_scoring(predictions, probs, labels, nbins)
 
     def get_training_duration(self):
